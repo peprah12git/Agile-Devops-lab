@@ -26,15 +26,6 @@ jobs:
     - name: Run Tests
       run: mvn -B test --file work/pom.xml
     
-    - name: Generate Test Coverage Report
-      if: always()
-      run: mvn -B jacoco:report --file work/pom.xml
-    
-    - name: Check Test Coverage
-      run: |
-        echo "Test coverage report generated"
-        echo "View report at: work/target/site/jacoco/index.html"
-    
     - name: Package Application
       run: mvn -B package -DskipTests --file work/pom.xml
     
@@ -43,10 +34,3 @@ jobs:
       with:
         name: bookshop-app
         path: work/target/*.jar
-    
-    - name: Upload Test Coverage Report
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: coverage-report
-        path: work/target/site/jacoco/

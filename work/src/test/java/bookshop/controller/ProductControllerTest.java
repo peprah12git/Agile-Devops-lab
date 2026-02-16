@@ -42,6 +42,7 @@ import bookshop.dto.request.ProductCreateDto;
 import bookshop.dto.request.ProductUpdateDto;
 import bookshop.dto.response.PageResponse;
 import bookshop.exceptions.BusinessException;
+import bookshop.exceptions.GlobalExceptionHandler;
 import bookshop.exceptions.ProductNotFoundException;
 import bookshop.models.Product;
 import bookshop.services.serviceInterface.ProductService;
@@ -70,7 +71,9 @@ class ProductControllerTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(productController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(productController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
         objectMapper = new ObjectMapper();
         
         testProduct = new Product();
@@ -665,7 +668,6 @@ class ProductControllerTest {
 
             // Assert
             verify(productService, times(1)).deleteProduct(5);
-            verify(productService, never()).deleteProduct(anyInt());
         }
     }
 
