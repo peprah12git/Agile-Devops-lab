@@ -146,6 +146,7 @@ bookshop-ecommerce/
 - ❌ No checkout process
 - ❌ No payment integration
 
+
 **Inventory Enhancements:**
 - ❌ No low-stock alerts or warnings
 - ❌ No inventory dashboard with visual indicators
