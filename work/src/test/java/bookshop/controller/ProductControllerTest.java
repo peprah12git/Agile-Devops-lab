@@ -92,6 +92,7 @@ class ProductControllerTest {
 
     @Nested
     @DisplayName("GET /api/products - Get All Products")
+    // Tests for retrieving paginated list of products with various parameters and edge cases
     class GetAllProductsTests {
 
         @Test
