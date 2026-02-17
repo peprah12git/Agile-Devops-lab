@@ -2,6 +2,8 @@ package bookshop.controller;
 
 import java.math.BigDecimal;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +33,7 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/products")
 public class ProductController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
     private final ProductService productService;
 
     @Autowired
@@ -56,8 +59,11 @@ public class ProductController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "ASC") String direction) {
 
+        logger.info("GET /api/products - Fetching products: page={}, size={}, sortBy={}, direction={}", 
+                   page, size, sortBy, direction);
         PageRequest pageRequest = PageRequest.of(page, size, sortBy, direction);
         PageResponse<Product> response = productService.getAllProducts(pageRequest);
+        logger.debug("Retrieved {} products", response.getTotalElements());
 
         return ResponseEntity.ok(response);
     }
@@ -69,9 +75,16 @@ public class ProductController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable int id) {
+        logger.info("GET /api/products/{} - Fetching product by ID", id);
         return productService.getProductById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .map(product -> {
+                    logger.debug("Product found: {}", product.getName());
+                    return ResponseEntity.ok(product);
+                })
+                .orElseGet(() -> {
+                    logger.warn("Product not found with ID: {}", id);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
     /**
@@ -87,8 +100,10 @@ public class ProductController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "ASC") String direction) {
 
+        logger.info("GET /api/products/category/{} - page={}, size={}", categoryId, page, size);
         PageRequest pageRequest = PageRequest.of(page, size, sortBy, direction);
         PageResponse<Product> response = productService.getProductsByCategory(categoryId, pageRequest);
+        logger.debug("Found {} products in category {}", response.getTotalElements(), categoryId);
 
         return ResponseEntity.ok(response);
     }
@@ -106,8 +121,10 @@ public class ProductController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "ASC") String direction) {
 
+        logger.info("GET /api/products/search - keyword='{}', page={}, size={}", keyword, page, size);
         PageRequest pageRequest = PageRequest.of(page, size, sortBy, direction);
         PageResponse<Product> response = productService.searchProducts(keyword, pageRequest);
+        logger.debug("Search found {} products matching '{}'", response.getTotalElements(), keyword);
 
         return ResponseEntity.ok(response);
     }
@@ -143,6 +160,7 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<Product>
     createProduct(@Valid @RequestBody ProductCreateDto productCreateDto) {
+        logger.info("POST /api/products - Creating product: {}", productCreateDto.getName());
         // Map DTO to Product model
         Product product = new Product();
         product.setName(productCreateDto.getName());
@@ -150,6 +168,7 @@ public class ProductController {
         product.setCategoryId(productCreateDto.getCategoryId());
         
         Product created = productService.createProduct(product);
+        logger.info("Product created successfully with ID: {}", created.getProductId());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -167,9 +186,13 @@ public class ProductController {
             @PathVariable int id,
             @Valid @RequestBody ProductUpdateDto productUpdateDto) {
 
+        logger.info("PUT /api/products/{} - Updating product", id);
         // Verify product exists
         Product existingProduct = productService.getProductById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + id));
+                .orElseThrow(() -> {
+                    logger.error("Product not found with ID: {}", id);
+                    return new ProductNotFoundException("Product not found with ID: " + id);
+                });
         
         // Update fields from DTO
         existingProduct.setName(productUpdateDto.getName());
@@ -177,6 +200,7 @@ public class ProductController {
         existingProduct.setCategoryId(productUpdateDto.getCategoryId());
         
         Product updated = productService.updateProduct(existingProduct);
+        logger.info("Product {} updated successfully", id);
         return ResponseEntity.ok(updated);
     }
 
@@ -187,7 +211,9 @@ public class ProductController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable int id) {
+        logger.info("DELETE /api/products/{} - Deleting product", id);
         productService.deleteProduct(id);
+        logger.info("Product {} deleted successfully", id);
         return ResponseEntity.noContent().build();
     }
 }

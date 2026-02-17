@@ -8,6 +8,8 @@ import bookshop.exceptions.UserNotFoundException;
 import bookshop.models.User;
 import bookshop.services.serviceInterface.UserService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 public class
 UserController {
     
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
     
     @Autowired
@@ -41,8 +44,10 @@ UserController {
      */
     @PostMapping("/register")
     public ResponseEntity<UserResponsedto> registerUser(@Valid @RequestBody UserRegistrationdto registrationDto) {
+        logger.info("POST /api/users/register - Registering user: {}", registrationDto.getEmail());
         // Check if email already exists
         if (userService.emailExists(registrationDto.getEmail())) {
+            logger.warn("Registration failed - Email already exists: {}", registrationDto.getEmail());
             throw new EmailAlreadyExistsException("Email already registered: " + registrationDto.getEmail());
         }
 
@@ -50,10 +55,11 @@ UserController {
         User user = new User();
         user.setName(registrationDto.getName());
         user.setEmail(registrationDto.getEmail());
-        user.setCourse(registrationDto.getRole()); // Using course field to store role
-        // Note: Password hashing should be done in service layer
+        user.setCourse(registrationDto.getCourse());
+        user.setAge(registrationDto.getAge());
         
         User createdUser = userService.registerUser(user);
+        logger.info("User registered successfully with ID: {}", createdUser.getId());
         
         // Build response
         UserResponsedto response = buildUserResponse(createdUser);
@@ -70,7 +76,9 @@ UserController {
      */
     @GetMapping
     public ResponseEntity<List<UserResponsedto>> getAllUsers() {
+        logger.info("GET /api/users - Fetching all users");
         List<User> users = userService.getAllUsers();
+        logger.debug("Retrieved {} users", users.size());
         List<UserResponsedto> response = users.stream()
                 .map(this::buildUserResponse)
                 .collect(Collectors.toList());
@@ -88,8 +96,12 @@ UserController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<UserResponsedto> getUserById(@PathVariable int id) {
+        logger.info("GET /api/users/{} - Fetching user by ID", id);
         User user = userService.getUserById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
+                .orElseThrow(() -> {
+                    logger.warn("User not found with ID: {}", id);
+                    return new UserNotFoundException("User not found with ID: " + id);
+                });
         
         UserResponsedto response = buildUserResponse(user);
         
@@ -198,6 +210,9 @@ UserController {
         response.setUserId(user.getId());
         response.setName(user.getName());
         response.setEmail(user.getEmail());
+        response.setCourse(user.getCourse());
+        response.setAge(user.getAge());
+        response.setCreatedAt(user.getCreatedAt());
         return response;
     }
 }
