@@ -1,33 +1,44 @@
-package bookshop.dto.response;
+package bookshop.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Min;
 
 /**
- * Data Transfer Object for User Registration
- * Simplified for basic bookshop without authentication
+ * DTO for user registration requests
  */
-public class UserRegistrationdto {
-
-    @NotBlank(message = "Name is Required")
-    @Size(min = 4, max = 100)
+public class RegisterRequestDto {
+    
+    @NotBlank(message = "Name is required")
+    @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     private String name;
-
+    
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
     private String email;
-
+    
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must be at least 6 characters")
+    private String password;
+    
+    private String role;  // Optional, defaults to CUSTOMER
+    
     private String course;
+    
+    @Min(value = 0, message = "Age must be positive")
     private Integer age;
 
     // Constructors
-    public UserRegistrationdto() {
+    public RegisterRequestDto() {
+        this.role = "CUSTOMER";
     }
 
-    public UserRegistrationdto(String name, String email, String course, Integer age) {
+    public RegisterRequestDto(String name, String email, String password, String role, String course, Integer age) {
         this.name = name;
         this.email = email;
+        this.password = password;
+        this.role = role != null ? role : "CUSTOMER";
         this.course = course;
         this.age = age;
     }
@@ -49,6 +60,22 @@ public class UserRegistrationdto {
         this.email = email;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     public String getCourse() {
         return course;
     }
@@ -67,12 +94,12 @@ public class UserRegistrationdto {
 
     @Override
     public String toString() {
-        return "UserRegistrationdto{" +
+        return "RegisterRequestDto{" +
                 "name='" + name + '\'' +
                 ", email='" + email + '\'' +
+                ", role='" + role + '\'' +
                 ", course='" + course + '\'' +
                 ", age=" + age +
                 '}';
     }
 }
-

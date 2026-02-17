@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 /**
  * User entity matching database schema
  * Table: users
- * Columns: id, name, email, course, age, created_at
+ * Columns: id, name, email, password, role, course, age, created_at
  */
 public class User {
     

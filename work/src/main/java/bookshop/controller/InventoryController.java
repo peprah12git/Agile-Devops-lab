@@ -1,5 +1,7 @@
 package bookshop.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +32,7 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/inventory")
 public class InventoryController {
     
+    private static final Logger logger = LoggerFactory.getLogger(InventoryController.class);
     private final InventoryService inventoryService;
     private final ProductService productService;
     
@@ -50,9 +53,13 @@ public class InventoryController {
      */
     @PostMapping
     public ResponseEntity<InventoryResponseDto> createInventory(@Valid @RequestBody InventoryCreateDto inventoryCreateDto) {
+        logger.info("POST /api/inventory - Creating inventory for product ID: {}", inventoryCreateDto.getProductId());
         // Verify product exists
         productService.getProductById(inventoryCreateDto.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + inventoryCreateDto.getProductId()));
+                .orElseThrow(() -> {
+                    logger.error("Product not found with ID: {}", inventoryCreateDto.getProductId());
+                    return new ProductNotFoundException("Product not found with ID: " + inventoryCreateDto.getProductId());
+                });
 
         // Create inventory
         Inventory inventory = new Inventory();
@@ -60,6 +67,8 @@ public class InventoryController {
         inventory.setQuantity(inventoryCreateDto.getQuantityAvailable());
 
         Inventory createdInventory = inventoryService.createInventory(inventory);
+        logger.info("Inventory created successfully for product ID: {}, quantity: {}", 
+                   createdInventory.getProductId(), createdInventory.getQuantity());
         
         // Build response
         InventoryResponseDto response = buildInventoryResponse(createdInventory);
@@ -77,9 +86,14 @@ public class InventoryController {
      */
     @GetMapping("/{productId}")
     public ResponseEntity<InventoryResponseDto> getInventoryByProductId(@PathVariable int productId) {
+        logger.info("GET /api/inventory/{} - Fetching inventory", productId);
         Inventory inventory = inventoryService.getInventoryByProductId(productId)
-                .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for product ID: " + productId));
+                .orElseThrow(() -> {
+                    logger.warn("Inventory not found for product ID: {}", productId);
+                    return new InventoryNotFoundException("Inventory not found for product ID: " + productId);
+                });
         
+        logger.debug("Inventory found: {} units available", inventory.getQuantity());
         InventoryResponseDto response = buildInventoryResponse(inventory);
         
         return ResponseEntity.ok(response);
@@ -99,7 +113,9 @@ public class InventoryController {
             @PathVariable int productId,
             @Valid @RequestBody StockUpdateDto stockUpdateDto) {
         
+        logger.info("PUT /api/inventory/{}/quantity - Updating to: {}", productId, stockUpdateDto.getQuantity());
         Inventory updatedInventory = inventoryService.updateQuantity(productId, stockUpdateDto.getQuantity());
+        logger.info("Inventory updated successfully for product ID: {}", productId);
         InventoryResponseDto response = buildInventoryResponse(updatedInventory);
         
         return ResponseEntity.ok(response);
