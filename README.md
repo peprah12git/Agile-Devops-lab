@@ -1,6 +1,13 @@
 # Bookshop E-Commerce Platform
 
-A full-stack e-commerce application for online bookshop management built with Spring Boot and React.
+A full-stack e-commerce application for online bookshop management built with Spring Boot and React. The platform features comprehensive product catalog, inventory management, user management, and category organization with built-in logging and monitoring capabilities.
+
+## Project Status
+
+**Current Sprint:** Sprint 2 ✅ COMPLETED  
+**Build Status:** passing  
+**Test Coverage:** ~60% (service layer)  
+**Last Updated:** February 17, 2026
 
 ## Technology Stack
 
@@ -9,6 +16,8 @@ A full-stack e-commerce application for online bookshop management built with Sp
 - **Language:** Java 25
 - **Database:** MySQL 8.0+
 - **Build Tool:** Maven
+- **Monitoring:** Spring Boot Actuator
+- **Logging:** Logback with file rotation
 - **Testing:** JUnit 5, Mockito, Spring Boot Test
 
 ### Frontend
@@ -170,6 +179,37 @@ npm test
 | PUT | `/api/users/{id}` | Update user |
 | DELETE | `/api/users/{id}` | Delete user |
 
+### Category Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/categories` | List all categories |
+| GET | `/api/categories/{id}` | Get category by ID |
+| POST | `/api/categories` | Create new category |
+| PUT | `/api/categories/{id}` | Update category |
+| DELETE | `/api/categories/{id}` | Delete category |
+
+### Monitoring & Health Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/actuator/health` | Application health status |
+| GET | `/actuator/metrics` | Performance metrics |
+| GET | `/actuator/info` | Application information |
+| GET | `/actuator/loggers` | Logger configuration |
+
+**Health Check Response Example:**
+```json
+{
+  "status": "UP",
+  "components": {
+    "db": {"status": "UP"},
+    "diskSpace": {"status": "UP"},
+    "ping": {"status": "UP"}
+  }
+}
+```
+
 ---
 
 ## Project Structure
@@ -187,6 +227,7 @@ bookshop-ecommerce/
 │   │   └── config/               # Configuration
 │   ├── src/main/resources/
 │   │   ├── application.yml       # Main config
+│   │   ├── logback-spring.xml    # Logging configuration
 │   │   └── schema.sql            # Database schema
 │   └── src/test/java/bookshop/   # Tests
 ├── frontend/                      # Frontend (React)
@@ -195,8 +236,120 @@ bookshop-ecommerce/
 │   │   ├── pages/                # Page components
 │   │   ├── services/             # API services
 │   │   └── styles/               # CSS
+├── logs/                          # Application logs (10MB rotation, 30-day retention)
 └── .github/workflows/             # CI/CD pipelines
 ```
+
+---
+
+## Features
+
+### ✅ Implemented
+
+**Product Management:**
+- Complete CRUD operations (Create, Read, Update, Delete)
+- Advanced search with keyword matching
+- Filter by category and price range
+- Pagination and sorting (configurable page size, sort by any field)
+- Product details with inventory tracking
+
+**Inventory Management:**
+- Stock quantity tracking
+- Create and update inventory records
+- Reduce stock operations (for order simulation)
+- Get inventory by product ID
+- Stock validation and constraints
+
+**User Management:**
+- User registration with email validation
+- Email uniqueness enforcement
+- Complete user CRUD operations
+- User profile management
+
+**Category Management:**
+- Category CRUD operations
+- Product categorization
+- Category-based filtering
+
+**Monitoring & Observability:**
+- Spring Boot Actuator integration
+- Health checks (database, disk space, application)
+- Performance metrics and monitoring
+- Comprehensive logging with Logback
+- Log file rotation and retention policies
+- Debug and info level logging
+
+**Testing & CI/CD:**
+- Comprehensive unit and integration tests
+- GitHub Actions CI/CD pipeline
+- Automated test execution on every commit
+- JaCoCo test coverage reporting
+- Automated build and artifact generation
+
+
+
+---
+
+## Logging
+
+### Configuration
+
+The application uses Logback for comprehensive logging with file rotation:
+
+**Log Levels:**
+- `DEBUG` for bookshop package (detailed application logs)
+- `INFO` for root logger (general information)
+
+**Log File:**
+- Location: `logs/bookshop.log`
+- Rotation: 10MB file size limit
+- Retention: 30 days
+- Pattern: `%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %level - %msg%n`
+
+**Logged Operations:**
+- All API requests and responses
+- Database operations
+- Error and exception details
+- Business logic execution flow
+
+**View Logs:**
+```bash
+# Tail live logs
+tail -f logs/bookshop.log
+
+# Windows PowerShell
+Get-Content logs/bookshop.log -Wait -Tail 50
+```
+
+---
+
+## Monitoring
+
+### Health Checks
+
+Check application status:
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+**Components Monitored:**
+- Database connectivity
+- Disk space availability
+- Application availability
+
+### Metrics
+
+View application metrics:
+```bash
+curl http://localhost:8080/actuator/metrics
+```
+
+**Available Metrics:**
+- JVM memory usage
+- HTTP request statistics
+- Database connection pool
+- Thread pool status
+- CPU usage
 
 ---
 
@@ -225,35 +378,13 @@ The project uses GitHub Actions for continuous integration:
 
 ---
 
-## Development Workflow
-
-### Branch Strategy
-- `main` - Production-ready code
-- `develop` - Integration branch
-- `feature/*` - Feature branches
-- `bugfix/*` - Bug fix branches
-
-### Commit Guidelines
-- Use clear, descriptive commit messages
-- Make small, incremental commits
-- Reference issue numbers in commits
-
-### Pull Request Process
-1. Create feature branch from `develop`
-2. Make changes and commit
-3. Push branch and create PR
-4. Wait for CI pipeline to pass
-5. Request code review
-6. Merge after approval
-
----
-
 ## Troubleshooting
 
 ### Database Connection Issues
 - Verify MySQL is running: `mysql -u root -p`
 - Check credentials in `application.yml`
 - Ensure database `bookshop` exists
+- Check health endpoint: `curl http://localhost:8080/actuator/health`
 
 ### Port Already in Use
 - Backend (8080): Change in `application.yml` → `server.port`
@@ -268,6 +399,19 @@ The project uses GitHub Actions for continuous integration:
 - Check test database configuration in `application-test.yml`
 - Ensure test data is properly set up
 - Run tests individually to isolate issues
+- View test coverage: `work/target/site/jacoco/index.html`
+
+### Logging Issues
+- Check log file exists: `logs/bookshop.log`
+- Verify Logback configuration: `src/main/resources/logback-spring.xml`
+- Ensure logs directory has write permissions
+- Check disk space for log rotation
+
+### Monitoring/Actuator Not Working
+- Verify Actuator dependency in `pom.xml`
+- Check `application.yml` for actuator endpoints configuration
+- Ensure application is running: `http://localhost:8080/actuator/health`
+- Review logs for startup errors
 
 ---
 
